@@ -2,5 +2,6 @@
 *.pot
 *.pyc
 musiclocation/settings.py
+musiclocation/settings_local.py
 musiclocation/sqlite_db
 TODO
