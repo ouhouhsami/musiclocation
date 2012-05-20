@@ -1,4 +1,6 @@
 *.log
 *.pot
 *.pyc
-local_settings.py
+musiclocation/settings.py
+musiclocation/sqlite_db
+TODO

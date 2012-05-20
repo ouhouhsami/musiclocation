@@ -1,0 +1,12 @@
+Django==1.4
+PIL==1.1.7
+-e git://github.com/maraujop/django-crispy-forms.git@913251f5fa5589beb580b60fabc1403422eea3ec#egg=django_crispy_forms-dev
+-e git://github.com/jorgebastida/django-dajax.git@878cd26a7ed355ff612317fe8aadf58ece725cf7#egg=django_dajax-dev
+-e git://github.com/jorgebastida/django-dajaxice.git@d5a70654fbcd7241fbdfaf5a89fea2746cd25369#egg=django_dajaxice-dev
+django-guardian==1.0.4
+django-social-auth==0.6.9
+easy-thumbnails==1.0
+httplib2==0.7.4
+oauth2==1.5.211
+python-openid==2.2.5
+wsgiref==0.1.2

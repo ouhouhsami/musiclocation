@@ -1,0 +1,211 @@
+{% load static i18n crispy_forms_tags dajaxice_templatetags %}
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+{% dajaxice_js_import %} 
+    <script src="//maps.googleapis.com/maps/api/js?sensor=false&libraries=drawing" type="text/javascript"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js" type="text/javascript" charset="utf-8"></script>
+    <link rel="stylesheet" href="{{ STATIC_URL }}bootstrap/css/bootstrap.min.css">
+    <link rel="{{ STATIC_URL }}bootstrap/css/bootstrap-responsive.min.css">
+    <link rel="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/themes/base/jquery-ui.css">
+    <script src="{{ STATIC_URL }}js/jquery.dajax.core.js"></script>
+    <script src="{{ STATIC_URL }}bootstrap/js/bootstrap.min.js"></script>
+    <script src="{{ STATIC_URL }}js/bootstrap-typeahead.js"></script>
+    <script src="{{ STATIC_URL }}js/map.js"></script>
+    <script type="text/javascript">
+      var icon_red = "{{ STATIC_URL}}img/red-dot.png";
+      var icon_blue = "{{ STATIC_URL}}img/blue-dot.png";  
+      var icon_green = "{{ STATIC_URL}}img/green-dot.png";                                                                          
+      $(document).ready(function() {
+        // ajax api request
+        $('#input-search, #item-input').typeahead({
+            source: function (typeahead, query) {
+                ajax_datas = $.ajax({
+                    url:'http://api.deezer.com/2.0/search',
+                    data: {q:query, output:'jsonp'},
+                    success: function(data){
+                        results = []
+                        for(var i in data.data){
+                            var obj = data.data[i]
+                            if(obj.type == "track"){
+                                label = obj.title+' ('+obj.album.title+') '+obj.artist.name
+                                results.push({label:label, type:obj.type, id:obj.id})
+                            }
+                            /* just track for the moment
+                            if(obj.type == "album"){
+                                results.push({label:'album '+obj.title, type:obj.type, id:obj.id})
+                            }
+                            if(obj.type == "artist"){
+                                results.push({label:'artist '+obj.name, type:obj.type, id:obj.id})
+                            }
+                            */
+                        }
+                        typeahead.process(results)
+                    },
+                    dataType: "jsonp"
+                })
+            },
+            onselect: appendItem,
+            property: "label"
+        })
+        // append item
+        function appendItem(obj, elmt){
+          $(elmt).val('');
+          if(obj.type == "track"){
+            // html = '<div class="well" style="padding:5px;margin-bottom:5px"><a class="btn btn-mini" rel="tooltip" title="drag me on the map !"><i class="icon-map-marker"></i></a> '+obj.label+'</div>'
+            //var tg = $(html).appendTo($('#items'))
+            ref = add_form()
+            ref.find('*[name$=item_id]').val(obj.id)
+            ref.find('*[name$=item_type]').val(obj.type)
+            ref.find('.item_label').html(obj.label)
+            //var draggable = ref.find('i').draggable({helper:"clone"});
+          }
+        }
+      });
+      $('#status').click(function(event){
+          DZ.player.pause()
+      })
+      var total_form_count = {{ formset.total_form_count }};
+      var initial_form_count = {{ formset.initial_form_count }};
+      //var form = '{{ formset.empty_form|escapejs }}';
+      var form = '{% spaceless %}{% filter escapejs %}{% crispy formset.empty_form %}{% endfilter %}{% endspaceless %}';
+      add_form = function(){
+        var current_form = form.replace(/__prefix__/g, total_form_count);
+        total_form_count += 1;
+        $('form#edit').find('*[name$="TOTAL_FORMS"]').val(total_form_count);
+        var ref = $(current_form).prependTo($('.formset_container'));
+        return ref;
+      }
+    </script>                       
+    <style>
+      body {
+        padding-top: 60px;
+      }
+      #map_canvas {
+        width:100%;
+        height:400px;
+      }
+      #edid .well {
+	    cursor:pointer;
+      }
+#map_canvas label { width: auto; display:inline; }
+#map_canvas img { max-width: none; }
+    </style>
+  </head>
+  <body>
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a href="" class="brand">MusicLocation</a>
+          <div class="nav-collapse">
+            <!-- <form class="navbar-search pull-left">
+              <input type="text" id="input-search" placeholder="search song" class=" input-medium search-query" />
+            </form>-->
+            <ul class="nav pull-right">
+              {% if user.is_authenticated %}
+              <!-- <li><a href="" class="focus">{% trans "Account" %}</a></li>-->
+              <li><a href="{% url logout %}">{% trans "Logout" %}</a></li>
+              {% else %}
+              <li><a href="/login/deezer">{% trans "Login" %}</a></li>
+              {% endif %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% block content %}
+    <div class="container">
+      <div class="row">
+        <div class="span12" >
+        <div id="player"></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="span8">
+          <div class="row">
+            <div class="span4">
+              <form class=" form-search">
+                <a onclick="localizeMe()" class="btn" id="localize-btn"><i class="icon-screenshot"></i> Localize me</a>
+                <input id="location-input" type="text" class="input-medium search-query" placeholder="or enter a location">
+                <!-- <a class="btn">Stop</a><a class="btn">Pause</a><a class="btn">Play</a> -->
+              </form>
+            </div>
+            <div class="span1">
+              <a id="status" class="btn disabled"><i class="icon-play"></i></a>
+            </div>
+            <div class="span3">
+              <span id="current_track_label"></span>
+            </div>
+          </div>
+          <div id="map_canvas"></div>
+        </div>
+        <div class="span4" id="item-list">
+          {% if user.is_authenticated %}
+          <form class=" form-search">
+            <input id="item-input" type="text" class="input-medium search-query" placeholder="search song">
+          </form>
+          <form method="POST" id="edit" action=".">
+            {% csrf_token %}
+            {{ formset.management_form }}
+            <div class="formset_container">
+            </div>
+            {% for form in formset %}
+              {% crispy form %}
+            {% endfor %}
+            <div id="items">
+            </div>
+            <input class="btn-primary" type="submit" value="Sauvegarder" />
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endblock content %}
+  <div class="navbar navbar-fixed-bottom">
+    <div class="navbar-inner">
+      <div class="container">
+        <p class="navbar-text pull-left">© 2012 MusicLocation</p>
+      </div>
+    </div>
+  </div>
+  <div id="dz-root"></div>
+  <script src="http://cdn-files.deezer.com/js/min/dz.js"></script>
+  <script>
+	DZ.init({
+		appId : '101591',
+		channelUrl : 'http:/musiclocation.dev:8000/channel.html',
+		player : true
+	});
+	function playTrack(id) {
+		DZ.player.playTracks([id], 0, function(response){
+			//console.log("track list", response.tracks);
+		});
+		// get track metadata
+		$.ajax({
+			url:'http://api.deezer.com/2.0/track/'+id,
+			data: {output:'jsonp'},
+			dataType: 'jsonp',
+			success: function(data){
+				console.log(data.title, data.album.title, data.artist.name)
+				$('#current_track_label').html('<i>'+data.title+'</i> ('+data.album.title+') '+data.artist.name)
+			}
+		})
+		// update UX
+		$('*[name$=item_id]').parent().removeClass('alert-success')
+		$('*[name$=item_id][value='+id+']').parent().addClass('alert-success')
+		for(i in markers){
+			if($(markers[i]).data('item_id') == id){
+				markers[i].setIcon(icon_green)
+			}else {
+				markers[i].setIcon(icon_red)
+			}
+		}
+		$('#status').removeClass('disabled');
+		$('#status').addClass('btn-success');
+	}
+
+  </script>
+  </body>
+</html>
