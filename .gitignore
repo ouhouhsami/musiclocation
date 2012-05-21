@@ -5,3 +5,4 @@ musiclocation/settings.py
 musiclocation/settings_local.py
 musiclocation/sqlite_db
 TODO
+fabfile.py
