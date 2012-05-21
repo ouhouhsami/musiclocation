@@ -13,7 +13,7 @@ for dir in glob.glob(os.environ['VIRTUAL_ENV'] + '/src/*'):
         site.addsitedir(dir)
 
 # hack for django-moderation project
-site.addsitedir('/home/%(account_name)s/.virtualenvs/%(virtualenv_name)s/src/django-moderation/src')
+# site.addsitedir('/home/%(account_name)s/.virtualenvs/%(virtualenv_name)s/src/django-moderation/src')
 
 _PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _PROJECT_DIR)
