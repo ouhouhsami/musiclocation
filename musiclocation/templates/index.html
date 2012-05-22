@@ -18,7 +18,19 @@
       var icon_red = "{{ STATIC_URL}}img/red-dot.png";
       var icon_blue = "{{ STATIC_URL}}img/blue-dot.png";  
       var icon_green = "{{ STATIC_URL}}img/green-dot.png";                                                                          
+      /*
+      function save_items_callback(data){
+         $('#formset').html(data.html);
+      }
+      */
       $(document).ready(function() {
+        // submit button
+        /*
+        $("#edit").submit(function() {
+          Dajaxice.utils.save_items(save_items_callback, {'data':$(this).serialize()})
+          return false;
+        })
+        */
         // ajax api request
         $('#input-search, #item-input').typeahead({
             source: function (typeahead, query) {
@@ -67,8 +79,7 @@
       $('#status').click(function(event){
           DZ.player.pause()
       })
-      var total_form_count = {{ formset.total_form_count }};
-      var initial_form_count = {{ formset.initial_form_count }};
+
       //var form = '{{ formset.empty_form|escapejs }}';
       var form = '{% spaceless %}{% filter escapejs %}{% crispy formset.empty_form %}{% endfilter %}{% endspaceless %}';
       add_form = function(){
@@ -126,7 +137,7 @@
         <div class="span8">
           <div class="row">
             <div class="span4">
-              <form class=" form-search">
+              <form class=" form-search" >
                 <a onclick="localizeMe()" class="btn" id="localize-btn"><i class="icon-screenshot"></i> Localize me</a>
                 <input id="location-input" type="text" class="input-medium search-query" placeholder="or enter a location">
                 <!-- <a class="btn">Stop</a><a class="btn">Pause</a><a class="btn">Play</a> -->
@@ -147,16 +158,14 @@
             <input id="item-input" type="text" class="input-medium search-query" placeholder="search song">
           </form>
           <form method="POST" id="edit" action=".">
-            {% csrf_token %}
-            {{ formset.management_form }}
-            <div class="formset_container">
+            <div id="formset">
+            {% include 'formset.html' %}
             </div>
-            {% for form in formset %}
-              {% crispy form %}
-            {% endfor %}
             <div id="items">
             </div>
-            <input class="btn-primary" type="submit" value="Sauvegarder" />
+            <div class="form-actions">
+              <input class="btn-primary" id="save" type="submit" value="Sauvegarder" />
+            </div>
           </form>
           {% endif %}
         </div>
@@ -188,7 +197,7 @@
 			data: {output:'jsonp'},
 			dataType: 'jsonp',
 			success: function(data){
-				console.log(data.title, data.album.title, data.artist.name)
+				//console.log(data.title, data.album.title, data.artist.name)
 				$('#current_track_label').html('<i>'+data.title+'</i> ('+data.album.title+') '+data.artist.name)
 			}
 		})

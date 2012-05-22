@@ -1,0 +1,12 @@
+{% load i18n crispy_forms_tags %}
+{% csrf_token %}
+{{ formset.management_form }}
+<div class="formset_container">
+</div>
+{% for form in formset %}
+  {% crispy form %}
+{% endfor %}
+<script type="text/javascript">
+  var total_form_count = {{ formset.total_form_count }};
+  var initial_form_count = {{ formset.initial_form_count }};
+</script>

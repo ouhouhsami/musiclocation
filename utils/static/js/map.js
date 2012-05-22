@@ -189,6 +189,7 @@ function items_callback(data){
   }
 }
 
+
 function show_item(data){
   if($.inArray(data.pk, markers_id) == -1){
     var re = /\((.*),\s(.*)\)/;
@@ -199,17 +200,27 @@ function show_item(data){
       position: new google.maps.LatLng(lat,lng),
       map: map,
       draggable: false,
+      //title: 
       //icon:icon_red,
     });
     marker.data = data
     markers.push(marker)
     google.maps.event.addListener(marker, 'click', function(event){
       //TODO: add visualisation for play function
-      
       playTrack(this.data.fields.item_id);
       this.setIcon(icon_green);
     })
     markers_id.push(data.pk)
+    google.maps.event.addListener(marker, 'mouseover', function(event){
+      if(this.getIcon() != '/static/img/green-dot.png'){
+        this.setIcon(icon_blue);
+       }
+    })
+    google.maps.event.addListener(marker, 'mouseout', function(event){
+      if(this.getIcon() != '/static/img/green-dot.png'){
+        this.setIcon(icon_red);
+      }
+    })
   }
   // below we should hold id of currently displayed item 
   // to not reshow them

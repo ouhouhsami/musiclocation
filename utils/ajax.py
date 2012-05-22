@@ -1,9 +1,18 @@
 # coding=utf-8
-from django.utils import simplejson
-from dajaxice.core import dajaxice_functions
-from utils.models import ItemLocation
-from django.core import serializers
 import ast
+
+from django.utils import simplejson
+from django.core import serializers
+from django.http import QueryDict 
+from django.forms.models import inlineformset_factory
+from django.contrib.auth.models import User
+from django.template.loader import render_to_string
+
+from dajaxice.core import dajaxice_functions
+
+from utils.models import ItemLocation
+from utils.forms import ItemLocationForm
+
 
 def hello_ajax(request): 
     ''' help test ajax function '''
@@ -30,3 +39,16 @@ def get_items(request, zone):
     return response
 
 dajaxice_functions.register(get_items)
+
+def save_items(request, data):
+    if request.user.is_authenticated():
+        user = request.user
+        ItemLocationFormset = inlineformset_factory(User, ItemLocation,
+                                                       form=ItemLocationForm, extra=0)
+        formset = ItemLocationFormset(QueryDict(data), instance=user)
+        if formset.is_valid():
+            formset.save()
+            rendered = render_to_string('formset.html', {'formset': formset})
+            return simplejson.dumps({'html':rendered})
+
+dajaxice_functions.register(save_items)
