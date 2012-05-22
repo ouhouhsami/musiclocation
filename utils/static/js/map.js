@@ -73,20 +73,33 @@ $(document).ready(function() {
 	.live('mouseover', function(event){
 		// change current form style
 		$(this).addClass('alert-info');
-		var current_maker = $(this).find('.marker').data('marker');
-		// show marker linked to form on map
-		current_maker.setIcon(icon_blue);
-
+		try{
+			var current_maker = $(this).find('.marker').data('marker');
+			// show marker linked to form on map
+			current_maker.setIcon(icon_blue);
+		}
+		catch(err){
+		
+		}
 	})
 	.live('mouseout', function(event){
 		$(this).removeClass('alert-info');
-		var current_maker = $(this).find('.marker').data('marker');
-		current_maker.setIcon(icon_red);
+		try{
+			var current_maker = $(this).find('.marker').data('marker');
+			current_maker.setIcon(icon_red);			
+		}
+		catch(err){
+			
+		}
 	})
 	$('.well:not(.alert-success)').find('i.icon-map-marker').live('click', function(event){
 		// center map
-		var current_maker = $(this).parent().find('.marker').data('marker');
-		map.setCenter(current_maker.getPosition())		
+		try{
+			var current_maker = $(this).parent().find('.marker').data('marker');
+			map.setCenter(current_maker.getPosition())
+		}
+		catch(err){
+		}	
 	})
 
 
@@ -102,6 +115,7 @@ $(document).ready(function() {
         draggable:true,
         position: position
       })
+      $(ui.draggable).attr('data-original-title', 'click to center map on this track')
       $(ui.draggable).parent().find('*[name$=position]').val(position.toString())
       $(ui.draggable).parent().find('*[name$=position]').data('marker', marker);
       $(marker).data('item_id', $(ui.draggable).parent().find('*[name$=item_id]').val());
@@ -129,6 +143,12 @@ $(document).ready(function() {
   $('i.icon-play').live('click', function(event){
     $(this).parent().removeClass('alert-info')
     playTrack($(this).parent().find('*[id$=item_id]').val())
+    try{
+		var current_maker = $(this).parent().find('.marker').data('marker');
+		map.setCenter(current_maker.getPosition())
+	}
+		catch(err){
+	}
   })
 
 })

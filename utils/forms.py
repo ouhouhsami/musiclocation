@@ -25,11 +25,14 @@ class ItemLocationForm(ModelForm):
             url = 'http://api.deezer.com/2.0/%s/%s' % (self.instance.item_type, self.instance.item_id)
             data = simplejson.load(urlopen(url))
             if self.instance.item_type == 'track':
-                label = "<span class='item_label'><i>%s</i> (%s)</span> %s" % (data['title'], data['album']['title'], data['artist']['name'])
-              # return to tuple not mandatory
+                try:
+                    label = "<span class='item_label'><i>%s</i> (%s)</span> %s" % (data['title'], data['album']['title'], data['artist']['name'])
+                    # return to tuple not mandatory
+                except:
+                    label = "<span class='item_label'><i>connections quota exceeded</i> reload !</span>" 
         else:
              label = "<span class='item_label'></span>"          
-        a.insert(0, HTML(u'<i class="icon-map-marker drag"></i> <i class="icon-play"></i> %s <a class="close" >×</a>' % (label)))
+        a.insert(0, HTML(u'<i class="icon-map-marker drag" title="click to center map on this track"></i> <i class="icon-play" title="click to play track"></i> %s <a class="close" >×</a>' % (label)))
         self.helper.layout.fields = tuple(a)
 
     class Meta:

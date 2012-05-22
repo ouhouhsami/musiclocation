@@ -24,6 +24,8 @@
       }
       */
       $(document).ready(function() {
+        // tooltips
+        $('.icon-map-marker, .icon-play').tooltip()
         // submit button
         /*
         $("#edit").submit(function() {
@@ -87,6 +89,10 @@
         total_form_count += 1;
         $('form#edit').find('*[name$="TOTAL_FORMS"]').val(total_form_count);
         var ref = $(current_form).prependTo($('.formset_container'));
+        // change tooltip for map marker
+        ref.find('i.icon-map-marker').attr('title', 'drag\'n drop on the map to locate the track')
+        ref.find('i.icon-map-marker').tooltip();
+        ref.find('i.icon-play').tooltip();
         return ref;
       }
     </script>                       
