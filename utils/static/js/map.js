@@ -21,7 +21,7 @@ $(document).ready(function() {
 
   var myOptions = {
     zoom: 8,
-    center: new google.maps.LatLng({{ lat }}, {{ lon }}),
+    center: new google.maps.LatLng(lat,lon),
     mapTypeId: google.maps.MapTypeId.ROADMAP,
     streetViewControl:false,
     mapTypeControl:false
