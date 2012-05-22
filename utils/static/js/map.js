@@ -76,13 +76,17 @@ $(document).ready(function() {
 		var current_maker = $(this).find('.marker').data('marker');
 		// show marker linked to form on map
 		current_maker.setIcon(icon_blue);
-		// center map
-		map.setCenter(current_maker.getPosition())
+
 	})
 	.live('mouseout', function(event){
 		$(this).removeClass('alert-info');
 		var current_maker = $(this).find('.marker').data('marker');
 		current_maker.setIcon(icon_red);
+	})
+	$('.well:not(.alert-success)').find('i.icon-map-marker').live('click', function(event){
+		// center map
+		var current_maker = $(this).parent().find('.marker').data('marker');
+		map.setCenter(current_maker.getPosition())		
 	})
 
 

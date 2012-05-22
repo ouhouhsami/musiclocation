@@ -183,8 +183,8 @@
   <script src="http://cdn-files.deezer.com/js/min/dz.js"></script>
   <script>
 	DZ.init({
-		appId : '101591',
-		channelUrl : 'http:/musiclocation.dev:8000/channel.html',
+		appId : '{{ DEEZER_APP_ID }}',
+		channelUrl : '{{ DEEZER_CHANNEL_URL }}',
 		player : true
 	});
 	function playTrack(id) {
