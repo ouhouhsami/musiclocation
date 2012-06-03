@@ -1,8 +1,9 @@
 var map;
 var markers = [];
 
-var markers_id = []
+var markers_id = [];
 
+var edit_marker;
 
 $(document).ready(function() {
 
@@ -41,6 +42,38 @@ $(document).ready(function() {
     show();
   });
 
+
+  // edition marker
+
+
+  edit_marker = new google.maps.Marker({icon:icon_blue})
+  google.maps.event.addListener(map, 'click', function(event){
+    // test if user is logged
+    // add marker
+    // open marker popup with form
+    current_position = event.latLng
+    edit_marker.setMap(map);
+    edit_marker.setPosition(event.latLng);
+    infowindow.open(map, edit_marker);
+  })
+
+  var content = '<form class="form-search"> '+
+    '<label for="add-item-input">Search song:</label><input type="text" id="add-item-input" class="input-medium search-query">' +
+    '</form>';
+
+  var infowindow = new google.maps.InfoWindow({
+    content: content,
+    maxWidth:400
+  });
+
+  google.maps.event.addListener(infowindow, 'domready', function(event){
+    $('#add-item-input').typeahead(typeahead_options);
+    $('#add-item-input').focus()
+  })
+
+  google.maps.event.addListener(infowindow, 'closeclick', function(event){
+    edit_marker.setMap(null);
+  })
 
   var overlay = new google.maps.OverlayView();
   overlay.draw = function() {};
@@ -164,6 +197,7 @@ addEventsToMarker = function(field, marker){
     if($(self).parent('.well').hasClass('alert-success')){
     }else{
       this.setIcon(icon_blue);
+      // don't work this.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
     }
   })
   google.maps.event.addListener(marker, 'mouseout', function(event){
@@ -191,6 +225,22 @@ localizeMe = function(){
   }
 }
 
+function add_marker(position, form){
+  var position = new google.maps.LatLng(position.lat(), position.lng())
+  var marker = new google.maps.Marker({
+      map:map,
+      draggable:true,
+      position: position
+  })
+
+  //$(ui.draggable).attr('data-original-title', 'click to center map on this track')
+  //$(ui.draggable).parent().find('*[name$=position]').val(position.toString())
+  form.find('*[name$=position]').data('marker', marker);
+  $(marker).data('item_id', form.find('*[name$=item_id]').val());
+  addEventsToMarker(form.find('*[name$=position]').get(0), marker);
+  markers.push(marker);
+
+}
 
 // show current items
 

@@ -14,9 +14,11 @@ class ItemLocation(models.Model):
     item_id = models.IntegerField()
     position = models.CharField(max_length=255)
     user = models.ForeignKey(User)
-    #TODO? comment = models.TextField(blank=True, null=True)
-    #TODO add unique for item_id, item, user
+    # TODO? comment = models.TextField(blank=True, null=True)
+    # TODO? add unique for item_id, item, user
     # TODO: add lat and lon as fields
+    # TODO: add label (to prevent reload data from deezer)
+    # TODO: add artist image
     def _get_lat(self):
         return ast.literal_eval(self.position)[0]
     lat = property(_get_lat)

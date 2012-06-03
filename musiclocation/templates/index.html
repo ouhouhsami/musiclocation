@@ -19,7 +19,9 @@
       var icon_blue = "{{ STATIC_URL}}img/blue-dot.png";  
       var icon_green = "{{ STATIC_URL}}img/green-dot.png";  
       var lat = {{ lat }};
-      var lon = {{ lon  }}                                                                        
+      var lon = {{ lon  }};
+      var current_position;
+      var typeahead_options;                                                                      
       /*
       function save_items_callback(data){
          $('#formset').html(data.html);
@@ -27,7 +29,7 @@
       */
       $(document).ready(function() {
         // tooltips
-        $('.icon-map-marker, .icon-play').tooltip()
+        $('.icon-map-marker, .icon-play').tooltip({placement:'bottom'})
         // submit button
         /*
         $("#edit").submit(function() {
@@ -36,10 +38,11 @@
         })
         */
         // ajax api request
-        $('#input-search, #item-input').typeahead({
+        typeahead_options = {
             source: function (typeahead, query) {
                 ajax_datas = $.ajax({
-                    url:'http://api.deezer.com/2.0/search',
+                    //url:'http://api.deezer.com/2.0/search',
+                    url:'http://api.deezer.com/2.0/search/track/',
                     data: {q:query, output:'jsonp'},
                     success: function(data){
                         results = []
@@ -49,14 +52,6 @@
                                 label = obj.title+' ('+obj.album.title+') '+obj.artist.name
                                 results.push({label:label, type:obj.type, id:obj.id})
                             }
-                            /* just track for the moment
-                            if(obj.type == "album"){
-                                results.push({label:'album '+obj.title, type:obj.type, id:obj.id})
-                            }
-                            if(obj.type == "artist"){
-                                results.push({label:'artist '+obj.name, type:obj.type, id:obj.id})
-                            }
-                            */
                         }
                         typeahead.process(results)
                     },
@@ -65,7 +60,8 @@
             },
             onselect: appendItem,
             property: "label"
-        })
+        }
+        $('#input-search, #item-input').typeahead(typeahead_options)
         // append item
         function appendItem(obj, elmt){
           $(elmt).val('');
@@ -76,7 +72,11 @@
             ref.find('*[name$=item_id]').val(obj.id)
             ref.find('*[name$=item_type]').val(obj.type)
             ref.find('.item_label').html(obj.label)
+            ref.find('*[name$=position]').val(current_position.toString())
             //var draggable = ref.find('i').draggable({helper:"clone"});
+            edit_marker.setMap(null)
+            add_marker(current_position, ref)
+            // add marker
           }
         }
       });
@@ -92,9 +92,9 @@
         $('form#edit').find('*[name$="TOTAL_FORMS"]').val(total_form_count);
         var ref = $(current_form).prependTo($('.formset_container'));
         // change tooltip for map marker
-        ref.find('i.icon-map-marker').attr('title', 'drag\'n drop on the map to locate the track')
-        ref.find('i.icon-map-marker').tooltip();
-        ref.find('i.icon-play').tooltip();
+        //ref.find('i.icon-map-marker').attr('title', 'drag\'n drop on the map to locate the track')
+        ref.find('i.icon-map-marker').tooltip({placement:'bottom'});
+        ref.find('i.icon-play').tooltip({placement:'bottom'});
         return ref;
       }
     </script>                       
@@ -122,12 +122,15 @@
             <!-- <form class="navbar-search pull-left">
               <input type="text" id="input-search" placeholder="search song" class=" input-medium search-query" />
             </form>-->
+            <ul class="nav pull-left">
+                <li><a><i>"put songs on earth"</i></a></li>
+            </ul>
             <ul class="nav pull-right">
               {% if user.is_authenticated %}
               <!-- <li><a href="" class="focus">{% trans "Account" %}</a></li>-->
               <li><a href="{% url logout %}">{% trans "Logout" %}</a></li>
               {% else %}
-              <li><a href="/login/deezer">{% trans "Login" %}</a></li>
+              <li><a href="/login/deezer">{% trans "Login with Deezer" %}</a></li>
               {% endif %}
             </ul>
           </div>
@@ -140,31 +143,38 @@
         <div class="span12" >
         <div id="player"></div>
         </div>
-      </div>
-      <div class="row">
-        <div class="span8">
+        <div class="span12">
           <div class="row">
-            <div class="span4">
-              <form class=" form-search" >
+            <div class="span5">
+              
+              <form class=" form-search well" >
                 <a onclick="localizeMe()" class="btn" id="localize-btn"><i class="icon-screenshot"></i> Localize me</a>
                 <input id="location-input" type="text" class="input-medium search-query" placeholder="or enter a location">
                 <!-- <a class="btn">Stop</a><a class="btn">Pause</a><a class="btn">Play</a> -->
               </form>
             </div>
-            <div class="span1">
-              <a id="status" class="btn disabled"><i class="icon-play"></i></a>
-            </div>
             <div class="span3">
-              <span id="current_track_label"></span>
+             <div class="well">Click on the map to put a song</div>
+            </div>
+            <div class="span4"><div class="well">
+              <a id="status" class="btn disabled"><i class="icon-play"></i></a>
+              <span id="current_track_label"></span></div>
             </div>
           </div>
+          
+        </div>
+      </div>
+      <div class="row">
+        <div class="span8">
           <div id="map_canvas"></div>
         </div>
-        <div class="span4" id="item-list">
+        <div class="span4" id="item-list" style="overflow:hidden; height:400px; overflow-y : scroll;">
           {% if user.is_authenticated %}
+          {% comment %}
           <form class=" form-search">
             <input id="item-input" type="text" class="input-medium search-query" placeholder="search song">
           </form>
+          {% endcomment %}
           <form method="POST" id="edit" action=".">
             <div id="formset">
             {% include 'formset.html' %}

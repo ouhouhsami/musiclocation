@@ -32,7 +32,8 @@ class ItemLocationForm(ModelForm):
                     label = "<span class='item_label'><i>connections quota exceeded</i> reload !</span>" 
         else:
              label = "<span class='item_label'></span>"          
-        a.insert(0, HTML(u'<i class="icon-map-marker drag" title="click to center map on this track"></i> <i class="icon-play" title="click to play track"></i> %s <a class="close" >×</a>' % (label)))
+        #a.insert(0, HTML(u'<i class="icon-map-marker drag" title="click to center map on this track"></i> <i class="icon-play" title="click to play track"></i> %s <a class="close" >×</a>' % (label)))
+        a.insert(0, HTML(u'<i class="icon-map-marker" title="click to center map on this track"></i> <i class="icon-play" title="click to play track"></i> %s <a class="close" >×</a>' % (label)))
         self.helper.layout.fields = tuple(a)
 
     class Meta:
