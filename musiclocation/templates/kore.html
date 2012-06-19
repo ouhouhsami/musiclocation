@@ -1,0 +1,80 @@
+{% load static i18n crispy_forms_tags dajaxice_templatetags %}
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    {% block javascript %}
+    <!-- below we load google map with drawing and geomoetry libraries, drawing for adding markers and geometry-->
+    <script src="//maps.googleapis.com/maps/api/js?sensor=false&libraries=drawing,geometry" type="text/javascript"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ STATIC_URL }}js/markerclusterer_compiled.js" type="text/javascript" charset="utf-8"></script>
+    <link rel="stylesheet" href="{{ STATIC_URL }}bootstrap/css/bootstrap.min.css">
+    <link rel="{{ STATIC_URL }}bootstrap/css/bootstrap-responsive.min.css">
+    <link rel="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/themes/base/jquery-ui.css">
+    <script src="{{ STATIC_URL }}js/jquery.dajax.core.js"></script>
+    <script src="{{ STATIC_URL }}bootstrap/js/bootstrap.min.js"></script>
+    <script src="{{ STATIC_URL }}js/bootstrap-typeahead.js"></script>
+    {% endblock %}
+    <style>
+      body {
+        padding-top: 60px;
+      }
+      #map_canvas {
+        width:100%;
+        height:400px;
+      }
+      #map_canvas label { 
+        width: auto;
+        display:inline; 
+      }
+      #map_canvas img { 
+        max-width: none; 
+      }
+    </style>
+  </head>
+  <body>
+
+    {% block header %}
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a href="" class="brand">MusicLocation</a>
+          <div class="nav-collapse">
+            <!-- <form class="navbar-search pull-left">
+              <input type="text" id="input-search" placeholder="search song" class=" input-medium search-query" />
+            </form>-->
+            <ul class="nav pull-left">
+                <li><a><i>"put songs on earth"</i></a></li>
+                <li>              <a id="status" class="btn disabled"><i class="icon-play"></i></a>
+              <span id="current_track_label"></span></li>
+            </ul>
+            <ul class="nav pull-right">
+              {% if user.is_authenticated %}
+              <!-- <li><a href="" class="focus">{% trans "Account" %}</a></li>-->
+              <li><a href="{% url logout %}">{% trans "Logout" %}</a></li>
+              {% else %}
+              <li><a href="/login/deezer">{% trans "Login with Deezer" %}</a></li>
+              {% endif %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endblock %}
+
+    {% block content %}
+
+    {% endblock %}
+
+    {% block footer %}
+  <div class="navbar navbar-fixed-bottom">
+    <div class="navbar-inner">
+      <div class="container">
+        <p class="navbar-text pull-left">© 2012 MusicLocation</p>
+      </div>
+    </div>
+  </div>
+    {% endblock %}
+  </body>
+</html>

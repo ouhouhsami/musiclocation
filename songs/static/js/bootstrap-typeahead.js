@@ -33,6 +33,7 @@
     this.strings = true
     this.shown = false
     this.listen()
+    console.log(options)
   }
 
   Typeahead.prototype = {
@@ -45,7 +46,7 @@
 
       if (!this.strings) text = val[this.options.property]
       else text = val
-
+      console.log(this.onselect)
       this.$element.val(text)
 
       if (typeof this.onselect == "function")

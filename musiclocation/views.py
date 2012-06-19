@@ -1,14 +1,19 @@
 import datetime
+from urllib2 import urlopen
+
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.forms.models import inlineformset_factory
-from utils.models import ItemLocation
 from django.contrib.auth import logout
 from django.shortcuts import redirect
 from django.contrib.auth.models import User
-from utils.forms import ItemLocationForm
-from urllib2 import urlopen
 from django.utils import simplejson
+from django.core import serializers
+
+from songs.models import SongLocation
+from songs.forms import SongLocationForm
+
+
 
 def get_client_ip(request):
     """
@@ -39,20 +44,23 @@ def get_lat_lon_client(ip):
 def home(request):
     ip = get_client_ip(request)
     lat, lon = get_lat_lon_client(ip)
-    ItemLocationFormset = inlineformset_factory(User, ItemLocation,
-                                                       form=ItemLocationForm, extra=0)
-    formset = ItemLocationFormset()
-    if request.method == "POST":
-        user = request.user
-        formset = ItemLocationFormset(request.POST, instance=user)
-        if formset.is_valid():
-            formset.save()
+    form = None
     if request.user.is_authenticated():
-        formset = ItemLocationFormset(instance=request.user)
+        items = SongLocation.objects.filter(user = request.user)[0:20]
+        json_serializer = serializers.get_serializer("json")()
+        items_serialized = json_serializer.serialize(items, ensure_ascii=False)
+        form = SongLocationForm()
+    else:
+        items = SongLocation.objects.none()
+        items_serialized = []
+    return render_to_response('index.html', {'lat':lat, 'lon':lon, 'items':items, 
+                                             'items_serialized':items_serialized, 'form':form}, 
+                              context_instance=RequestContext(request))
 
-    return render_to_response('index.html',
-                           {'formset':formset, 'lat':lat, 'lon':lon },
-                          context_instance=RequestContext(request))
+def all(request):
+    items = SongLocation.objects.all()
+    return render_to_response('all.html', {'items':items}, 
+                 context_instance=RequestContext(request))
 
 def logout_view(request):
     logout(request)

@@ -1,0 +1,35 @@
+<script type="text/javascript">
+$(document).ready(function() {
+
+
+  $('#input-search').typeahead({
+      source: function (typeahead, query) {
+          ajax_datas = $.ajax({
+              //url:'http://api.deezer.com/2.0/search',
+              url:'http://api.deezer.com/2.0/search/track/',
+              data: {q:query, output:'jsonp'},
+              success: function(data){
+                  results = []
+                  for(var i in data.data){
+                      var obj = data.data[i]
+                      if(obj.type == "track"){
+                          label = obj.title+' ('+obj.album.title+') '+obj.artist.name
+                          results.push({label:label, type:obj.type, id:obj.id})
+                      }
+                  }
+                  typeahead.process(results)
+              },
+              dataType: "jsonp"
+          })
+      },
+      onselect: appendItem,
+      property: "label"
+  })
+
+  function appendItem(obj, elmt){
+    $('#{{ name }}').val(obj.id);
+  }
+})
+</script>
+<input style="width:98%" id="input-search" placeholder="enter song" />
+<input type="{{ type }}" id="{{ name }}" name="{{ name }}"{% if value %} value="{{ value }}"{% endif %}{% if required %} required{% endif %} />

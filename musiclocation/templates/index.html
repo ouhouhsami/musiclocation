@@ -3,100 +3,68 @@
 <html lang="fr">
   <head>
     <meta charset="utf-8">
-{% dajaxice_js_import %} 
+    {% dajaxice_js_import %}
+    {% block javascript %}
     <script src="//maps.googleapis.com/maps/api/js?sensor=false&libraries=drawing" type="text/javascript"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript" charset="utf-8"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="{{ STATIC_URL }}js/markerclusterer_compiled.js" type="text/javascript" charset="utf-8"></script>
     <link rel="stylesheet" href="{{ STATIC_URL }}bootstrap/css/bootstrap.min.css">
     <link rel="{{ STATIC_URL }}bootstrap/css/bootstrap-responsive.min.css">
     <link rel="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/themes/base/jquery-ui.css">
     <script src="{{ STATIC_URL }}js/jquery.dajax.core.js"></script>
     <script src="{{ STATIC_URL }}bootstrap/js/bootstrap.min.js"></script>
     <script src="{{ STATIC_URL }}js/bootstrap-typeahead.js"></script>
+    {% endblock %}
     <script src="{{ STATIC_URL }}js/map.js"></script>
     <script type="text/javascript">
-      var icon_red = "{{ STATIC_URL}}img/red-dot.png";
-      var icon_blue = "{{ STATIC_URL}}img/blue-dot.png";  
-      var icon_green = "{{ STATIC_URL}}img/green-dot.png";  
       var lat = {{ lat }};
       var lon = {{ lon  }};
+      var markerCluster;
       var current_position;
-      var typeahead_options;                                                                      
+      var typeahead_options;
+      var is_authenticated = false;  
+      {% if user.is_authenticated %}
+          is_authenticated = true;  
+          //var form = '{{ form.as_p|escapejs }}';
+          //console.log(form)
+      {% endif %}
+                                                                    
       /*
       function save_items_callback(data){
          $('#formset').html(data.html);
       }
       */
       $(document).ready(function() {
+        $('.localize-item').click(function(event){
+          for(var i=0; i<markers.length; i++){
+            if(markers[i].id == $(this).data('item_id')){
+              map.setCenter(markers[i].getPosition())
+            }
+          }
+        })
         // tooltips
         $('.icon-map-marker, .icon-play').tooltip({placement:'bottom'})
-        // submit button
-        /*
-        $("#edit").submit(function() {
-          Dajaxice.utils.save_items(save_items_callback, {'data':$(this).serialize()})
-          return false;
+
+        $('#add_track_button').click(function(){
+          Dajaxice.utils.save_item(item_save_callback, {'item_id':$("#item_id").val(), 'position':$('#id_position').val()});
+          $('#myModal').modal('hide')
         })
-        */
-        // ajax api request
-        typeahead_options = {
-            source: function (typeahead, query) {
-                ajax_datas = $.ajax({
-                    //url:'http://api.deezer.com/2.0/search',
-                    url:'http://api.deezer.com/2.0/search/track/',
-                    data: {q:query, output:'jsonp'},
-                    success: function(data){
-                        results = []
-                        for(var i in data.data){
-                            var obj = data.data[i]
-                            if(obj.type == "track"){
-                                label = obj.title+' ('+obj.album.title+') '+obj.artist.name
-                                results.push({label:label, type:obj.type, id:obj.id})
-                            }
-                        }
-                        typeahead.process(results)
-                    },
-                    dataType: "jsonp"
-                })
-            },
-            onselect: appendItem,
-            property: "label"
-        }
-        $('#input-search, #item-input').typeahead(typeahead_options)
-        // append item
-        function appendItem(obj, elmt){
-          $(elmt).val('');
-          if(obj.type == "track"){
-            // html = '<div class="well" style="padding:5px;margin-bottom:5px"><a class="btn btn-mini" rel="tooltip" title="drag me on the map !"><i class="icon-map-marker"></i></a> '+obj.label+'</div>'
-            //var tg = $(html).appendTo($('#items'))
-            ref = add_form()
-            ref.find('*[name$=item_id]').val(obj.id)
-            ref.find('*[name$=item_type]').val(obj.type)
-            ref.find('.item_label').html(obj.label)
-            ref.find('*[name$=position]').val(current_position.toString())
-            //var draggable = ref.find('i').draggable({helper:"clone"});
-            edit_marker.setMap(null)
-            add_marker(current_position, ref)
-            // add marker
+        $('.close-item').click(function(event){
+          item_id = parseInt($(this).data('item_id'))
+          Dajaxice.utils.delete_item(item_delete_callback, {'item_id':item_id});
+          for(var i = 0; i<markers.length; i++){
+            if(markers[i].id == item_id){
+              markers[i].setMap(null);
+            }
           }
-        }
+          $(this).parent().remove()
+        });
+
       });
       $('#status').click(function(event){
           DZ.player.pause()
       })
-
-      //var form = '{{ formset.empty_form|escapejs }}';
-      var form = '{% spaceless %}{% filter escapejs %}{% crispy formset.empty_form %}{% endfilter %}{% endspaceless %}';
-      add_form = function(){
-        var current_form = form.replace(/__prefix__/g, total_form_count);
-        total_form_count += 1;
-        $('form#edit').find('*[name$="TOTAL_FORMS"]').val(total_form_count);
-        var ref = $(current_form).prependTo($('.formset_container'));
-        // change tooltip for map marker
-        //ref.find('i.icon-map-marker').attr('title', 'drag\'n drop on the map to locate the track')
-        ref.find('i.icon-map-marker').tooltip({placement:'bottom'});
-        ref.find('i.icon-play').tooltip({placement:'bottom'});
-        return ref;
-      }
     </script>                       
     <style>
       body {
@@ -109,11 +77,15 @@
       #edid .well {
 	    cursor:pointer;
       }
+      .alert-custom {
+        margin-bottom:4px;
+      }
 #map_canvas label { width: auto; display:inline; }
 #map_canvas img { max-width: none; }
     </style>
   </head>
   <body>
+    {% block header %}
     <div class="navbar navbar-fixed-top">
       <div class="navbar-inner">
         <div class="container">
@@ -124,6 +96,8 @@
             </form>-->
             <ul class="nav pull-left">
                 <li><a><i>"put songs on earth"</i></a></li>
+                <li>              <a id="status" class="btn disabled"><i class="icon-play"></i></a>
+              <span id="current_track_label"></span></li>
             </ul>
             <ul class="nav pull-right">
               {% if user.is_authenticated %}
@@ -137,8 +111,26 @@
         </div>
       </div>
     </div>
+    {% endblock %}
     {% block content %}
     <div class="container">
+      <a class="btn hide" data-toggle="modal" id="open_modal" href="#myModal" >Launch Modal</a>
+      <div class="modal hide" id="myModal">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">×</button>
+          <h3>Add Song</h3>
+        </div>
+        <div class="modal-body">
+           <form method="POST" id="add_track" action=".">
+             {% csrf_token %} 
+             {{ form.as_table }}
+           </form>
+        </div>
+        <div class="modal-footer">
+          <a href="#" class="btn" data-dismiss="modal">Cancel</a>
+          <a href="#" id="add_track_button" class="btn btn-primary">Save</a>
+        </div>
+      </div>
       <div class="row">
         <div class="span12" >
         <div id="player"></div>
@@ -153,43 +145,34 @@
                 <!-- <a class="btn">Stop</a><a class="btn">Pause</a><a class="btn">Play</a> -->
               </form>
             </div>
-            <div class="span3">
-             <div class="well">Click on the map to put a song</div>
-            </div>
-            <div class="span4"><div class="well">
-              <a id="status" class="btn disabled"><i class="icon-play"></i></a>
-              <span id="current_track_label"></span></div>
-            </div>
           </div>
-          
         </div>
       </div>
       <div class="row">
-        <div class="span8">
+        <div class="span{% if user.is_authenticated %}8{% else %}12{% endif %}">
           <div id="map_canvas"></div>
         </div>
+        {% if user.is_authenticated %}
         <div class="span4" id="item-list" style="overflow:hidden; height:400px; overflow-y : scroll;">
-          {% if user.is_authenticated %}
-          {% comment %}
-          <form class=" form-search">
-            <input id="item-input" type="text" class="input-medium search-query" placeholder="search song">
-          </form>
-          {% endcomment %}
+          {% for item in items %}
+            {% include 'item.html' %}
+          {% endfor %}
+          <script type="text/javascript">
+              var items = jQuery.parseJSON('{{ items_serialized|escapejs }}');
+              load_user_items = function(){
+              for(var i=0; i<items.length; i++){
+                  show_item(items[i]);
+              }
+              }
+          </script>
           <form method="POST" id="edit" action=".">
-            <div id="formset">
-            {% include 'formset.html' %}
-            </div>
-            <div id="items">
-            </div>
-            <div class="form-actions">
-              <input class="btn-primary" id="save" type="submit" value="Sauvegarder" />
-            </div>
           </form>
-          {% endif %}
         </div>
+        {% endif %}
       </div>
     </div>
     {% endblock content %}
+    {% block footer %}
   <div class="navbar navbar-fixed-bottom">
     <div class="navbar-inner">
       <div class="container">
@@ -197,6 +180,8 @@
       </div>
     </div>
   </div>
+    {% endblock %}
+    {% block deezer-player %}
   <div id="dz-root"></div>
   <script src="http://cdn-files.deezer.com/js/min/dz.js"></script>
   <script>
@@ -219,20 +204,8 @@
 				$('#current_track_label').html('<i>'+data.title+'</i> ('+data.album.title+') '+data.artist.name)
 			}
 		})
-		// update UX
-		$('*[name$=item_id]').parent().removeClass('alert-success')
-		$('*[name$=item_id][value='+id+']').parent().addClass('alert-success')
-		for(i in markers){
-			if($(markers[i]).data('item_id') == id){
-				markers[i].setIcon(icon_green)
-			}else {
-				markers[i].setIcon(icon_red)
-			}
-		}
-		$('#status').removeClass('disabled');
-		$('#status').addClass('btn-success');
 	}
-
   </script>
+    {% endblock %}
   </body>
 </html>

@@ -1,0 +1,175 @@
+{% extends 'kore.html' %}
+{% load dajaxice_templatetags %}
+
+{% block javascript %}
+  {% dajaxice_js_import %}
+  {{ block.super }}
+  <script src="{{ STATIC_URL }}js/clusteroverlay.js" type="text/javascript" charset="utf-8"></script>
+  <script type="text/javascript" >
+
+    $(document).ready(function() {
+
+    pd = function(a, b){
+       console.log(a)
+      return Math.sqrt(Math.pow((a.x-b.x), 2) + Math.pow((a.y-b.y), 2))
+    };
+
+
+      var myOptions = {
+        zoom: 8,
+        center: new google.maps.LatLng(48.870363,2.782030),
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        streetViewControl:false,
+        mapTypeControl:false
+      };
+      
+      map = new google.maps.Map(document.getElementById('map_canvas'), myOptions);
+      overlay = new google.maps.OverlayView();
+      overlay.draw = function() {};
+      overlay.setMap(map); 
+      {% comment %}
+      /* client side cluster method
+      var markers = [];
+      {% for item in items %}
+        var latLng = new google.maps.LatLng({{ item.position.x }}, {{ item.position.y }});
+        var marker = new google.maps.Marker({'position': latLng});
+        markers.push(marker);
+      {% endfor %}
+      markerCluster = new MarkerClusterer(map, markers);
+      */
+      {% endcomment %}
+
+      // server side method
+      google.maps.event.addListener(map, 'bounds_changed', get_songs);
+      //google.maps.event.addListener(map, 'dragend', get_songs);
+      // don't use zoom changed ! it s call before zoom has changed and bound changed
+      //google.maps.event.addListener(map, 'zoom_changed', get_songs);
+
+    function get_songs(event){
+/*      var triangleCoords = [
+        new google.maps.LatLng(49.5877928572, 5.36381710937),
+        new google.maps.LatLng(49.5877928572, 4.07292355469),
+        new google.maps.LatLng(49.1060274457, 4.07292355469),
+        new google.maps.LatLng(49.1060274457, 5.36381710937),
+        new google.maps.LatLng(49.5877928572, 5.36381710937)
+      ];
+bermudaTriangle = new google.maps.Polygon({
+    paths: triangleCoords,
+    strokeColor: "#FF0000",
+    strokeOpacity: 0.8,
+    strokeWeight: 2,
+    fillColor: "#FF0000",
+    fillOpacity: 0.35
+  });
+
+  bermudaTriangle.setMap(map);
+*/
+
+
+      var bounds = map.getBounds()
+      // below if we need map position to pixel conversion
+
+      var point_ne = overlay.getProjection().fromLatLngToContainerPixel(bounds.getNorthEast()); 
+      var point_sw = overlay.getProjection().fromLatLngToContainerPixel(bounds.getSouthWest()); 
+      // distance is in meters
+      var distance = google.maps.geometry.spherical.computeDistanceBetween (bounds.getNorthEast(), bounds.getSouthWest())
+      
+      console.log(bounds.getNorthEast().lat(), bounds.getSouthWest().lat(), bounds.getNorthEast().lat() > bounds.getSouthWest().lat())
+      console.log(bounds.getNorthEast().lng(), bounds.getSouthWest().lng(), bounds.getNorthEast().lng() > bounds.getSouthWest().lng())
+
+
+      var pixel_distance = pd(point_ne, point_sw) //Math.sqrt(Math.pow((point_ne.x-point_sw.x), 2) + Math.pow((point_ne.y-point_sw.y), 2))
+      console.log(point_ne, point_sw, distance, 'meters', pixel_distance, 'px')
+      //
+      var north_east_lat = bounds.getNorthEast().lat();
+      var north_east_lng = bounds.getNorthEast().lng();
+      var south_west_lat = bounds.getSouthWest().lat();
+      var south_west_lng = bounds.getSouthWest().lng();
+      if(bounds.getNorthEast().lng() < bounds.getSouthWest().lng()){
+        north_east_lng = 0;
+        south_west_lng = 360
+      }
+      Dajaxice.songs.get_songs(get_songs_callback, {'north_east_lat':north_east_lat, 'north_east_lng':north_east_lng, 'south_west_lat':south_west_lat, 'south_west_lng':south_west_lng, 'zoom':map.getZoom()});
+    }
+    function get_songs_callback(data){
+      console.log(data)
+      for(var i=0; i<clusters.length; i++){
+          clusters[i].setMap(null);
+      }
+      clusters = [];
+      for(var i=0; i<markers.length; i++){
+          markers[i].setMap(null);
+      }
+      markers = [];
+      for(var i=0; i<grids.length; i++){
+          grids[i].setMap(null);
+      }
+      grids = []
+      for(var i=0; i<data.length; i++){
+       //console.log(data[i])
+       //if(!data[i]){
+        if(data[i].type == 'cluster'){
+          var cluster = new ClusterOverlay(new google.maps.LatLng(data[i].lat, data[i].lng), data[i].total, map);
+          clusters.push(cluster)
+        }
+        else{
+          var marker = new google.maps.Marker({
+            position: new google.maps.LatLng(data[i].lat, data[i].lng),
+            map: map,
+          });
+          if(data[i].alone){marker.setIcon('/static/img/blue-dot.png')}
+          //console.log(data[i])
+          markers.push(marker)
+        }
+       //}
+      }
+      for(var i = 0; i<data.length; i++){
+        console.log(i, data[i].point_1lat)
+        var triangleCoords = [
+          new google.maps.LatLng(parseFloat(data[i].point_1lat), parseFloat(data[i].point_1lng)),
+          new google.maps.LatLng(parseFloat(data[i].point_2lat), parseFloat(data[i].point_2lng)),
+          new google.maps.LatLng(parseFloat(data[i].point_3lat), parseFloat(data[i].point_3lng)),
+          new google.maps.LatLng(parseFloat(data[i].point_4lat), parseFloat(data[i].point_4lng)),
+          new google.maps.LatLng(parseFloat(data[i].point_1lat), parseFloat(data[i].point_1lng))
+        ];
+        console.log(triangleCoords)
+        bermudaTriangle = new google.maps.Polygon({
+          paths: triangleCoords,
+          strokeColor: "#FF0000",
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillColor: "#FF0000",
+          fillOpacity: 0.35
+        });
+        bermudaTriangle.setMap(map);  
+        grids.push(bermudaTriangle)
+      }
+      //console.log(markers)
+      // show distance between markers
+      //
+          var l = markers.length
+          while(l > 1){
+            current_marker = markers.pop();
+            for(var i=0; i<markers.length; i++){ //console.log(pd(overlay.getProjection().fromLatLngToContainerPixel(current_marker.getPosition()),overlay.getProjection().fromLatLngToContainerPixel(markers[i].getPosition())), 'px')
+            }
+            l = markers.length
+          }
+    }
+
+    });
+
+
+
+    var clusters = [];
+    var markers = [];
+    var grids = []
+    var overlay
+
+  </script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div id="map_canvas"></div>
+</div>
+{% endblock %}

@@ -12,6 +12,7 @@ from django.conf import settings
 urlpatterns = patterns('',
     # Examples:
     url(r'^$', 'musiclocation.views.home', name='home'),
+    url(r'^all$', 'musiclocation.views.all', name='all'),
     ('^channel.html$', TemplateView.as_view(template_name='channel.html')),
     url(r'^accounts/logout/$', 'musiclocation.views.logout_view', name='logout'),
     (r'^dajaxice/', include('dajaxice.urls')),
